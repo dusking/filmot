@@ -35,8 +35,8 @@ class Config:
             If not, the class creates the necessary directory structure for the configuration file.
         """
         self._path: Path = (Path(path or DEFAULT_CONFIG_PATH)).expanduser()
-        self.rapidapi_key: str = ""
-        self.rapidapi_host: str = ""
+        self.rapidapi_key: str = os.environ.get("FILMOR_RAPIDAPI_KEY", "")
+        self.rapidapi_host: str = "filmot-tube-metadata-archive.p.rapidapi.com"
 
         if self._path.exists():
             data = json.loads(self._path.read_text())

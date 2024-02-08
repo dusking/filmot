@@ -32,7 +32,7 @@ VALID_LANGUAGES = Language.get_all_codes()
 class Filmot:
     """Filmot API Wrapper."""
 
-    def __init__(self, rapidapi_key: Optional[str] = None):
+    def __init__(self):
         """
         Initialize a Filmot Client object.
 
@@ -40,7 +40,7 @@ class Filmot:
             rapidapi_key (str, optional): The RapidAPI key. If None, the value will be taken from the config file.
         """
         self._config = Config()
-        self.rapidapi_key = rapidapi_key or self._config.rapidapi_key
+        self.rapidapi_key = self._config.rapidapi_key
         self.rapidapi_host = self._config.rapidapi_host
         self.base_url = f"https://{self.rapidapi_host}"
 
@@ -54,7 +54,6 @@ class Filmot:
         """
         config = Config()
         config.rapidapi_key = value
-        config.rapidapi_host = "filmot-tube-metadata-archive.p.rapidapi.com"
         if config.save():
             print("Credentials set successfully!")
 
