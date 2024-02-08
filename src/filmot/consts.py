@@ -11,6 +11,8 @@ directory of this project.
 
 
 class Categories:
+    """Represents various categories for classification."""
+
     AUTOS_AND_VEHICLES = "Autos & Vehicles"
     COMEDY = "Comedy"
     EDUCATION = "Education"
@@ -28,7 +30,8 @@ class Categories:
     TRAVEL_AND_EVENTS = "Travel & Events"
 
     @classmethod
-    def get_all_categories(cls):
+    def get_all_categories(cls) -> list:
+        """Get all available categories."""
         categories = []
         for attribute_name in dir(cls):
             if not attribute_name.startswith("__") and not callable(getattr(cls, attribute_name)):
@@ -37,6 +40,8 @@ class Categories:
 
 
 class Countries:
+    """Represents various countries and their corresponding country codes."""
+
     UNKNOWN = 1
     AFGHANISTAN = 2
     ALBANIA = 3
@@ -289,7 +294,8 @@ class Countries:
     WEST_BANK = 250
 
     @classmethod
-    def get_all_codes(cls):
+    def get_all_codes(cls) -> list:
+        """Get all available country codes."""
         codes = []
         for attribute_name in dir(cls):
             if not attribute_name.startswith("__") and not callable(getattr(cls, attribute_name)):
@@ -298,6 +304,8 @@ class Countries:
 
 
 class Language:
+    """Represents various languages and their corresponding language codes."""
+
     AFRIKAANS = "af"
     ALBANIAN = "sq"
     ARABIC = "ar"
@@ -376,7 +384,8 @@ class Language:
     NORTHERN_SAMI = "se"
 
     @classmethod
-    def get_all_codes(cls):
+    def get_all_codes(cls) -> list:
+        """Get all available language codes."""
         codes = []
         for attribute_name in dir(cls):
             if not attribute_name.startswith("__") and not callable(getattr(cls, attribute_name)):

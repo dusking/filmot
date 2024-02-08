@@ -49,11 +49,11 @@ class SearchResponse(BaseResponse):
 
         Returns:
             str: The main field.
-
         """
         return f"{self.query}-{self.result.id}"
 
-    def hit_count(self):
+    def hit_count(self) -> int:
+        """Get amount of hits."""
         return len(self.hits)
 
     def hit_data(self, index: int = 0) -> dict:
@@ -102,8 +102,10 @@ class SearchResponse(BaseResponse):
             hit_end_line = hit_line + 2
             text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line]])
             start = self.subtitles[hit_start_line].s
-            result.append({
-                "link": f"https://www.youtube.com/watch?v={self.result.id}&t={start}s",
-                "text": text,
-            })
+            result.append(
+                {
+                    "link": f"https://www.youtube.com/watch?v={self.result.id}&t={start}s",
+                    "text": text,
+                }
+            )
         return result

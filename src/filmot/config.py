@@ -44,6 +44,7 @@ class Config:
 
     @property
     def base_url(self):
+        """Get the RapidAPI API base url."""
         return f"https://{self.rapidapi_host}"
 
     def verify_config_dir(self):

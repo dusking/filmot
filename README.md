@@ -4,13 +4,13 @@
 ![PyPI](https://img.shields.io/pypi/v/filmot)
 ![Python](https://img.shields.io/pypi/pyversions/filmot)
 
-Filmot API Wrapper is a Python package that provides easy programmatically access to the 
-[Filmot.com](https://filmot.com/) search engine. It simplifies searching YouTube videos by words in subtitles, 
+Filmot API Wrapper is a Python package that provides easy programmatically access to the
+[Filmot.com](https://filmot.com/) search engine. It simplifies searching YouTube videos by words in subtitles,
 fetching channel statistics, and historical data.
 
 ## Prerequisites
 
-Before using the Filmot API Wrapper, you'll need a RapidAPI account and to register to the Filmot app at: 
+Before using the Filmot API Wrapper, you'll need a RapidAPI account and to register to the Filmot app at:
 [Filmot RapidAPI](https://rapidapi.com/Jopik1/api/filmot-tube-metadata-archive/).
 
 ## Installation
@@ -91,12 +91,12 @@ Here's another simple example:
 from filmot import Categories, Countries, Language
 
 # Adjust the search query
-response = filmot.search("Spill The Beans", 
-                         category=Categories.GAMING, 
-                         country=Countries.UNITED_STATES, 
-                         language=Language.ENGLISH, 
+response = filmot.search("Spill The Beans",
+                         category=Categories.GAMING,
+                         country=Countries.UNITED_STATES,
+                         language=Language.ENGLISH,
                          limit=3)
 ```
 
-With this wrapper, accessing Filmot.com API becomes easy and intuitive. 
+With this wrapper, accessing Filmot.com API becomes easy and intuitive.
 Happy coding!
