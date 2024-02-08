@@ -10,5 +10,6 @@ directory of this project.
 """
 
 from .config import Config  # noqa: F401
+from .consts import Categories, Countries, Language  # noqa: F401
 from .filmot import Filmot  # noqa: F401
 from .exceptions import FilmotException  # noqa: F401

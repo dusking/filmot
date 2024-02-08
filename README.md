@@ -84,5 +84,19 @@ print(response_dict)
 response_json = first_response.to_json()
 print(response_json)
 ```
+
+Here's another simple example:
+
+```python
+from filmot import Categories, Countries, Language
+
+# Adjust the search query
+response = filmot.search("Spill The Beans", 
+                         category=Categories.GAMING, 
+                         country=Countries.UNITED_STATES, 
+                         language=Language.ENGLISH, 
+                         limit=3)
+```
+
 With this wrapper, accessing Filmot.com API becomes easy and intuitive. 
 Happy coding!

@@ -32,9 +32,9 @@ class SearchResponse(BaseResponse):
         """
         self.query = query
         self.result = DotDict(result)
-        self.hits = sorted([DotDict(hit) for hit in hits], key=lambda x: int(x["start"]))
+        self.hits = sorted([DotDict(hit) for hit in hits], key=lambda x: float(x["start"]))
         self.subtitles = [DotDict(subtitle) for subtitle in subtitles]
-        self.more_results = more_results
+        self.more_results = more_results[1:]  # skip first result as it already in the result property
         super().__init__()
 
     class Meta:

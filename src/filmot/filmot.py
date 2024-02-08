@@ -18,11 +18,15 @@ from typing import Literal, Union, Optional
 
 from .config import Config
 from .asyncit import Asyncit
-from .consts import VALID_CATEGORIES, VALID_COUNTRIES
+from .consts import Categories, Countries, Language
 from .responses import SearchResponse
 from .exceptions import FilmotException
 
 logger = logging.getLogger(__name__)
+
+VALID_CATEGORIES = Categories.get_all_categories()
+VALID_COUNTRIES = Countries.get_all_codes()
+VALID_LANGUAGES = Language.get_all_codes()
 
 
 class Filmot:
@@ -97,14 +101,14 @@ class Filmot:
     def search(
         self,
         query: str,
+        language: Optional[str] = None,
         category: Optional[str] = None,
         exclude_category: Optional[str] = None,
         license: Optional[Union[int, Literal[1, 2]]] = None,
         max_views: Optional[int] = None,
         min_views: Optional[int] = None,
         min_likes: Optional[int] = None,
-        country_code: Optional[int] = None,
-        country_name: Optional[str] = None,
+        country: Optional[int] = None,
         channel_id: Optional[str] = None,
         title: Optional[str] = None,
         start_duration: Optional[int] = None,
@@ -119,6 +123,8 @@ class Filmot:
 
         Args:
             query (str, required): The search query. the text which is being found in the subtitle data.
+            language (str, optional): A two letter code that can be used to limit the search to only work on
+                subtitles with the specified language.
             category (str, optional): Exact string for the video category.
             exclude_category (str, optional): A comma delimited list of categories to be excluded from the results.
                 For example Music,Gaming
@@ -128,9 +134,8 @@ class Filmot:
             max_views (int, optional): The maximum number of views. Defaults to None.
             min_views (int, optional): The minimum number of views. Defaults to None.
             min_likes (int, optional): The minimum number of likes. Defaults to None.
-            country_code (int, optional): Numeric code representing the country to filter,
+            country (int, optional): Numeric code representing the country to filter,
                 this is the country as specified by the channel owner, could be unreliable.
-            country_name (str, optional): String representing the country to filter.
             channel_id (str, optional): Limit the search to this specific channel id.
             title (str, optional): Query to filter by the title of the video.
             start_duration (int, optional): Minimal duration of the video in seconds.
@@ -149,26 +154,23 @@ class Filmot:
             # Helper function to add a parameter to the query_params list
             if value is not None:
                 if name == "category":
-                    assert name in VALID_CATEGORIES
-                if name == "country_code":
-                    assert value in VALID_COUNTRIES.values()
-                    name = "country"
-                if name == "country_name":
+                    assert value in VALID_CATEGORIES
+                if name == "country":
                     assert value in VALID_COUNTRIES
-                    value = VALID_COUNTRIES[value]
-                    name = "country"
+                if name == "language":
+                    assert value in VALID_LANGUAGES
                 query_params[name] = value
 
         query_params = {}
         add_param("query", f'"{query}"' if " " in query else query)
+        add_param("lang", language)
         add_param("category", category)
         add_param("excludeCategory", exclude_category)
         add_param("license", license)
         add_param("maxViews", max_views)
         add_param("minViews", min_views)
         add_param("minLikes", min_likes)
-        add_param("country_name", country_name)
-        add_param("country_code", country_code)
+        add_param("country", country)
         add_param("channelID", channel_id)
         add_param("title", title)
         add_param("startDuration", start_duration)
