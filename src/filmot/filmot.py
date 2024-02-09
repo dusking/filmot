@@ -15,6 +15,7 @@ import logging
 import requests
 
 from typing import Literal, Union, Optional
+from collections import defaultdict
 
 from .config import Config
 from .asyncit import Asyncit
@@ -95,15 +96,19 @@ class Filmot:
             SearchResponse: The response for the search.
         """
         logger.info(f"Searching for {query_params}")
-        return SearchResponse(query=query_params["query"], **self.send_api("getsubtitlesearch", query_params))
+        return SearchResponse(
+            query=query_params["query"],
+            category=query_params.get("category"),
+            **self.send_api("getsubtitlesearch", query_params),
+        )
 
     def search(
         self,
         query: str,
         language: Optional[str] = None,
-        category: Optional[str] = None,
+        category: Optional[Union[str, list[str]]] = None,
         exclude_category: Optional[str] = None,
-        license: Optional[Union[int, Literal[1, 2]]] = None,
+        license: Optional[Literal[1, 2]] = None,
         max_views: Optional[int] = None,
         min_views: Optional[int] = None,
         min_likes: Optional[int] = None,
@@ -112,11 +117,11 @@ class Filmot:
         title: Optional[str] = None,
         start_duration: Optional[int] = None,
         end_duration: Optional[int] = None,
-        search_manual_subs: Optional[Union[int, Literal[1, 2]]] = None,
+        search_manual_subs: Optional[Literal[1, 2]] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 10,
-    ):
+    ) -> dict:
         """
         Perform a search equest.
 
@@ -146,7 +151,7 @@ class Filmot:
             limit (int, optional): The limit videos to return. Defaults to 10.
 
         Returns:
-            list: List of SearchResponse objects.
+            dict: Dict of category and list of SearchResponse objects. If no category provided the key will be None.
         """
 
         def add_param(name, value):
@@ -163,7 +168,6 @@ class Filmot:
         query_params = {}
         add_param("query", f'"{query}"' if " " in query else query)
         add_param("lang", language)
-        add_param("category", category)
         add_param("excludeCategory", exclude_category)
         add_param("license", license)
         add_param("maxViews", max_views)
@@ -178,18 +182,40 @@ class Filmot:
         add_param("startDate", start_date)
         add_param("endDate", end_date)
 
-        response = self.search_one(query_params)
-        result = [response]
+        categories = [None]
+        if category:
+            categories = [category] if isinstance(category, str) else category
 
-        more_results = [i["id"] for i in response.more_results[: limit - 1]]
-
+        aggregated_results = []
         asyncit = Asyncit(save_output=True)
-        for video_id in more_results:
+
+        # 1. get first result from each category
+        for category in categories:
+            # set search category if exists - do nothing if None
             temp_query_params = query_params.copy()
-            temp_query_params["queryVideoID"] = video_id
+            temp_query_params["category"] = category
+            # query using category
             asyncit.run(self.search_one, temp_query_params)
         asyncit.wait()
-        responses = asyncit.get_output()
-        result.extend(responses)
+        category_results = asyncit.get_output()
+        aggregated_results.extend(category_results)
 
-        return result
+        # 2. get rest wanted result for each category
+        for result in category_results:
+            more_results = [i["id"] for i in result.more_results[: limit - 1]]
+            for video_id in more_results:
+                temp_query_params = query_params.copy()
+                temp_query_params["queryVideoID"] = video_id
+                temp_query_params["category"] = result.video_info.category
+                asyncit.run(self.search_one, temp_query_params)
+
+        # obtain all results
+        asyncit.wait()
+        aggregated_results.extend(asyncit.get_output())
+
+        # order results by category
+        ordered_results = defaultdict(list)
+        for result in aggregated_results:
+            ordered_results[result.category].append(result)
+
+        return dict(ordered_results)

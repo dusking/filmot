@@ -16,10 +16,36 @@ from .dicts import DotDict
 logger = logging.getLogger(__name__)
 
 
+class VideoInfo(BaseResponse):
+    """VideoInfo class for video info in search results."""
+
+    def __init__(self, **kwargs):
+        """Initialize a VideoInfo object."""
+        self.id = kwargs.get("id")
+        self.title = kwargs.get("title")
+        self.duration = kwargs.get("duration")
+        self.upload_date = kwargs.get("uploaddate")
+        self.view_count = kwargs.get("viewcount")
+        self.like_count = kwargs.get("likecount")
+        self.channel_id = kwargs.get("channelid")
+        self.language = kwargs.get("lang")
+        self.category = kwargs.get("category")
+        self.channel_name = kwargs.get("channelname")
+        self.channel_sub_count = kwargs.get("channelsubcount")
+        self.channel_country_name = kwargs.get("channelcountryname")
+        self.channel_thumbnail_url = kwargs.get("channelthumbnailurl")
+        super().__init__()
+
+    class Meta:
+        """Meta class for VideoInfo."""
+
+        main_field = "id"
+
+
 class SearchResponse(BaseResponse):
     """Response class for search results."""
 
-    def __init__(self, query: str, result: dict, hits: list, subtitles: list, more_results: list):
+    def __init__(self, query: str, category: str, result: dict, hits: list, subtitles: list, more_results: list):
         """
         Initialize a SearchResponse object.
 
@@ -31,7 +57,8 @@ class SearchResponse(BaseResponse):
             more_results (list): Next video_id that match the query.
         """
         self.query = query
-        self.result = DotDict(result)
+        self.category = category
+        self.video_info = VideoInfo(**result)
         self.hits = sorted([DotDict(hit) for hit in hits], key=lambda x: float(x["start"]))
         self.subtitles = [DotDict(subtitle) for subtitle in subtitles]
         self.more_results = more_results[1:]  # skip first result as it already in the result property
@@ -50,7 +77,7 @@ class SearchResponse(BaseResponse):
         Returns:
             str: The main field.
         """
-        return f"{self.query}-{self.result.id}"
+        return f"{self.query}-{self.video_info.id}"
 
     def hit_count(self) -> int:
         """Get amount of hits."""
@@ -77,7 +104,7 @@ class SearchResponse(BaseResponse):
         text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line]])
         start = self.subtitles[hit_line - 1].s
         response = {
-            "link": f"https://www.youtube.com/watch?v={self.result.id}&t={start}s",
+            "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
             "text": text,
         }
         return response
@@ -104,7 +131,7 @@ class SearchResponse(BaseResponse):
             start = self.subtitles[hit_start_line].s
             result.append(
                 {
-                    "link": f"https://www.youtube.com/watch?v={self.result.id}&t={start}s",
+                    "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
                     "text": text,
                 }
             )

@@ -96,6 +96,13 @@ response = filmot.search("Spill The Beans",
                          country=Countries.UNITED_STATES,
                          language=Language.ENGLISH,
                          limit=3)
+
+# Search query for multiple queries
+response = filmot.search("Spill The Beans",
+                         category=[Categories.GAMING, Categories.SPORTS],
+                         country=Countries.UNITED_STATES,
+                         language=Language.ENGLISH,
+                         limit=3)
 ```
 
 With this wrapper, accessing Filmot.com API becomes easy and intuitive.
