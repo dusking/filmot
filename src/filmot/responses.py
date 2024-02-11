@@ -77,7 +77,7 @@ class SearchResponse(BaseResponse):
         Returns:
             str: The main field.
         """
-        return f"{self.query}-{self.video_info.id}"
+        return f"{self.query} {self.video_info.id}"
 
     def hit_count(self) -> int:
         """Get amount of hits."""

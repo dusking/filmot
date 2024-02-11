@@ -189,25 +189,35 @@ class Filmot:
         aggregated_results = []
         asyncit = Asyncit(save_output=True)
 
-        # 1. get first result from each category
         for category in categories:
-            # set search category if exists - do nothing if None
-            temp_query_params = query_params.copy()
-            temp_query_params["category"] = category
-            # query using category
-            asyncit.run(self.search_one, temp_query_params)
-        asyncit.wait()
-        category_results = asyncit.get_output()
-        aggregated_results.extend(category_results)
+            query_params["category"] = category
+            category_result = self.search_one(query_params)
+            aggregated_results.append(category_result)
 
-        # 2. get rest wanted result for each category
-        for result in category_results:
-            more_results = [i["id"] for i in result.more_results[: limit - 1]]
-            for video_id in more_results:
+            for hit_data in category_result.more_results[1:limit]:
                 temp_query_params = query_params.copy()
-                temp_query_params["queryVideoID"] = video_id
-                temp_query_params["category"] = result.video_info.category
+                temp_query_params["queryVideoID"] = hit_data["id"]
                 asyncit.run(self.search_one, temp_query_params)
+
+        # # 1. get first result from each category
+        # for category in categories:
+        #     # set search category if exists - do nothing if None
+        #     temp_query_params = query_params.copy()
+        #     temp_query_params["category"] = category
+        #     # query using category
+        #     asyncit.run(self.search_one, temp_query_params)
+        # asyncit.wait()
+        # category_results = asyncit.get_output()
+        # aggregated_results.extend(category_results)
+        #
+        # # 2. get rest wanted result for each category
+        # for result in category_results:
+        #     more_results = [i["id"] for i in result.more_results[: limit - 1]]
+        #     for video_id in more_results:
+        #         temp_query_params = query_params.copy()
+        #         temp_query_params["queryVideoID"] = video_id
+        #         temp_query_params["category"] = result.video_info.category
+        #         asyncit.run(self.search_one, temp_query_params)
 
         # obtain all results
         asyncit.wait()
