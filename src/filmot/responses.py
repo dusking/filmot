@@ -115,24 +115,31 @@ class SearchResponse(BaseResponse):
 
         Returns:
             dict: Dictionary containing hit data.
+
+        The goal is to create a list of hits, and for each hit to prepend previous line and append next line,
+        so the provided text will have more context.
         """
         result = []
         hit_line = 0
         search_from = 1
         for hit in self.hits:
-            for i, line in enumerate(self.subtitles[search_from:]):
-                if float(line.s) > float(hit.start):
-                    hit_line = i + search_from
-                    break
-            search_from = hit_line + 1
-            hit_start_line = hit_line - 2
-            hit_end_line = hit_line + 2
-            text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line]])
-            start = self.subtitles[hit_start_line].s
-            result.append(
-                {
-                    "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
-                    "text": text,
-                }
-            )
+            try:
+                for i, line in enumerate(self.subtitles[search_from:]):
+                    if float(line.s) > float(hit.start):
+                        hit_line = i + search_from
+                        break
+                search_from = hit_line + 1  # next time search from next line
+                hit_start_line = hit_line - 2  # prepend previous 2 lines
+                hit_end_line = hit_line + 2  # append next 2 lines
+                text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line] if item and item.txt])
+                start = self.subtitles[hit_start_line].s
+                result.append(
+                    {
+                        "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
+                        "text": text,
+                    }
+                )
+            except Exception as ex:
+                logger.warning(f"Failed to get hits_data: {ex}")
+                break
         return result
