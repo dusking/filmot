@@ -96,9 +96,15 @@ class SearchResponse(BaseResponse):
             dict: Dictionary containing hit data.
         """
         hit = self.hits[index]
-        text = hit.ctx_before + self.query + hit.ctx_after
+        ctx_before = hit.ctx_before
+        if not ctx_before and index > 0 and self.hits[index - 1]["break"] == 0:
+            ctx_before = self.hits[index - 1].ctx_after
+        text = ctx_before + f" {self.query} " + hit.ctx_after
+        start = int(hit.start)
+        if start > 1:
+            start -= 1
         response = {
-            "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={hit.start}s",
+            "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
             "text": text,
         }
 
@@ -118,7 +124,7 @@ class SearchResponse(BaseResponse):
         # }
         return response
 
-    def hits_data(self) -> list:
+    def hits_data(self, time_back_sec=1) -> list:
         """
         Get the 'index' hit data in the subtitles.
 
@@ -131,12 +137,19 @@ class SearchResponse(BaseResponse):
         result = []
         # hit_line = 0
         # search_from = 1
-        for hit in self.hits:
+        for index in range(len(self.hits)):
             try:
-                text = hit.ctx_before + f" {self.query} " + hit.ctx_after
+                hit = self.hits[index]
+                ctx_before = hit.ctx_before
+                if not ctx_before and index > 0 and self.hits[index - 1]["break"] == 0:
+                    ctx_before = self.hits[index - 1].ctx_after
+                text = ctx_before + f" {self.query} " + hit.ctx_after
+                start = int(hit.start)
+                if start > time_back_sec:
+                    start -= time_back_sec
                 result.append(
                     {
-                        "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={hit.start}s",
+                        "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
                         "text": text,
                     }
                 )
