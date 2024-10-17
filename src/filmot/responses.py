@@ -45,7 +45,7 @@ class VideoInfo(BaseResponse):
 class SearchResponse(BaseResponse):
     """Response class for search results."""
 
-    def __init__(self, query: str, category: str, result: dict, hits: list, subtitles: list, more_results: list):
+    def __init__(self, query: str, result: dict):
         """
         Initialize a SearchResponse object.
 
@@ -56,12 +56,14 @@ class SearchResponse(BaseResponse):
             subtitles (list): The first result subtitles, as list of lines data.
             more_results (list): Next video_id that match the query.
         """
+        hits = result["hits"]
+        category = result["category"]
         self.query = query
         self.category = category
         self.video_info = VideoInfo(**result)
         self.hits = sorted([DotDict(hit) for hit in hits], key=lambda x: float(x["start"]))
-        self.subtitles = [DotDict(subtitle) for subtitle in subtitles]
-        self.more_results = more_results[1:]  # skip first result as it already in the result property
+        # self.subtitles = [DotDict(subtitle) for subtitle in subtitles]
+        # self.more_results = more_results[1:]  # skip first result as it already in the result property
         super().__init__()
 
     class Meta:
@@ -93,20 +95,27 @@ class SearchResponse(BaseResponse):
         Returns:
             dict: Dictionary containing hit data.
         """
-        first_hit = self.hits[index]
-        hit_line = 0
-        for i, line in enumerate(self.subtitles[1:]):
-            if float(line.s) > float(first_hit.start):
-                hit_line = i
-                break
-        hit_start_line = hit_line - 1
-        hit_end_line = hit_line + 2
-        text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line]])
-        start = self.subtitles[hit_line - 1].s
+        hit = self.hits[index]
+        text = hit.ctx_before + self.query + hit.ctx_after
         response = {
-            "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
+            "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={hit.start}s",
             "text": text,
         }
+
+        # first_hit = self.hits[index]
+        # hit_line = 0
+        # for i, line in enumerate(self.subtitles[1:]):
+        #     if float(line.s) > float(first_hit.start):
+        #         hit_line = i
+        #         break
+        # hit_start_line = hit_line - 1
+        # hit_end_line = hit_line + 2
+        # text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line]])
+        # start = self.subtitles[hit_line - 1].s
+        # response = {
+        #     "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
+        #     "text": text,
+        # }
         return response
 
     def hits_data(self) -> list:
@@ -120,25 +129,33 @@ class SearchResponse(BaseResponse):
         so the provided text will have more context.
         """
         result = []
-        hit_line = 0
-        search_from = 1
+        # hit_line = 0
+        # search_from = 1
         for hit in self.hits:
             try:
-                for i, line in enumerate(self.subtitles[search_from:]):
-                    if float(line.s) > float(hit.start):
-                        hit_line = i + search_from
-                        break
-                search_from = hit_line + 1  # next time search from next line
-                hit_start_line = hit_line - 2  # prepend previous 2 lines
-                hit_end_line = hit_line + 2  # append next 2 lines
-                text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line] if item and item.txt])
-                start = self.subtitles[hit_start_line].s
+                text = hit.ctx_before + f" {self.query} " + hit.ctx_after
                 result.append(
                     {
-                        "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
+                        "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={hit.start}s",
                         "text": text,
                     }
                 )
+
+                # for i, line in enumerate(self.subtitles[search_from:]):
+                #     if float(line.s) > float(hit.start):
+                #         hit_line = i + search_from
+                #         break
+                # search_from = hit_line + 1  # next time search from next line
+                # hit_start_line = hit_line - 2  # prepend previous 2 lines
+                # hit_end_line = hit_line + 2  # append next 2 lines
+                # text = " ".join([item.txt for item in self.subtitles[hit_start_line:hit_end_line] if item and item.txt])
+                # start = self.subtitles[hit_start_line].s
+                # result.append(
+                #     {
+                #         "link": f"https://www.youtube.com/watch?v={self.video_info.id}&t={start}s",
+                #         "text": text,
+                #     }
+                # )
             except Exception as ex:
                 logger.warning(f"Failed to get hits_data: {ex}")
                 break

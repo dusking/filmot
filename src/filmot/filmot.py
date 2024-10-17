@@ -14,7 +14,7 @@ It contains wrpper functoins for the Filmot REST API.
 import logging
 import requests
 
-from typing import Literal, Union, Optional
+from typing import Literal, Union, Optional, List
 from collections import defaultdict
 
 from .config import Config
@@ -85,7 +85,7 @@ class Filmot:
         except ValueError as ex:
             raise FilmotException(f"Failed to parse JSON response: {ex}")
 
-    def search_one(self, query_params: dict) -> SearchResponse:
+    def search_bulk(self, query_params: dict) -> List[SearchResponse]:
         """
         Perform a single search.
 
@@ -96,11 +96,43 @@ class Filmot:
             SearchResponse: The response for the search.
         """
         logger.info(f"Searching for {query_params}")
-        return SearchResponse(
+
+        response = self.send_api("getsearchsubtitles", query_params)
+        result = response["result"]
+
+        all_results = [SearchResponse(
             query=query_params["query"],
-            category=query_params.get("category"),
-            **self.send_api("getsubtitlesearch", query_params),
-        )
+            result=single_result
+        ) for single_result in result]
+
+        return all_results
+
+    def search_one(self, query_params: dict) -> List[SearchResponse]:
+        """
+        Perform a single search.
+
+        Args:
+            query_params (dict): Parameters for the search.
+
+        Returns:
+            SearchResponse: The response for the search.
+        """
+        logger.info(f"Searching for {query_params}")
+
+        response = self.send_api("getsubtitlesearch", query_params)
+        result = response["result"]
+
+        all_results = [SearchResponse(
+            query=query_params["query"],
+            result=single_result
+        ) for single_result in result]
+
+        return all_results
+        # return SearchResponse(
+        #     query=query_params["query"],
+        #     category=query_params.get("category"),
+        #     **self.send_api("getsubtitlesearch", query_params),
+        # )
 
     def search(
         self,
@@ -183,21 +215,23 @@ class Filmot:
         add_param("endDate", end_date)
 
         categories = [None]
+        # categories = []
         if category:
             categories = [category] if isinstance(category, str) else category
 
-        aggregated_results = []
-        asyncit = Asyncit(save_output=True)
+        aggregated_results = {}
+        # asyncit = Asyncit(save_output=True)
 
         for category in categories:
             query_params["category"] = category
             category_result = self.search_one(query_params)
-            aggregated_results.append(category_result)
+            aggregated_results[category] = category_result
 
-            for hit_data in category_result.more_results[1:limit]:
-                temp_query_params = query_params.copy()
-                temp_query_params["queryVideoID"] = hit_data["id"]
-                asyncit.run(self.search_one, temp_query_params)
+        return aggregated_results
+            # for hit_data in category_result.more_results[1:limit]:
+            #     temp_query_params = query_params.copy()
+            #     temp_query_params["queryVideoID"] = hit_data["id"]
+            #     asyncit.run(self.search_one, temp_query_params)
 
         # # 1. get first result from each category
         # for category in categories:
@@ -220,12 +254,12 @@ class Filmot:
         #         asyncit.run(self.search_one, temp_query_params)
 
         # obtain all results
-        asyncit.wait()
-        aggregated_results.extend(asyncit.get_output())
+        # asyncit.wait()
+        # aggregated_results.extend(asyncit.get_output())
 
         # order results by category
-        ordered_results = defaultdict(list)
-        for result in aggregated_results:
-            ordered_results[result.category].append(result)
-
-        return dict(ordered_results)
+        # ordered_results = defaultdict(list)
+        # for result in aggregated_results:
+        #     ordered_results[result.category].append(result)
+        #
+        # return dict(ordered_results)
